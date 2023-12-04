@@ -86,7 +86,8 @@ func generateDigitFromLine( line []byte ) uint8 {
        }
 
        if n2 == NOT_FOUND {
-            if isNumerical( line[sz - i - 1] ) {
+            
+           if isNumerical( line[sz - i - 1] ) {
                 n2 = uint8(line[sz - i - 1]) - '0'
             }
 
