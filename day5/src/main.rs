@@ -1,4 +1,4 @@
-use std::{time::Instant};
+use std::{time::Instant, str::from_utf8 };
 use day5::modules::input;
 
 struct Range {
@@ -8,8 +8,12 @@ struct Range {
 }
 
 impl Range {
-    pub fn new ( src: u64, dest: u64, size: u64 ) -> Self {
+
+    pub fn new (str: &str ) -> Self {
         
+        let v = parse_sliced_numbers(str);
+        let ( dest, src, size ) = (v[0], v[1], v[2]);
+
         let expr = dest as i64 - src as i64;
 
         Range {
@@ -18,6 +22,17 @@ impl Range {
             expr
         }
     }
+
+    /*pub fn new ( src: u64, dest: u64, size: u64 ) -> Self {
+        
+        let expr = dest as i64 - src as i64;
+
+        Range {
+            from: src,
+            to: src + size,
+            expr
+        }
+    }*/
 }
 
 
@@ -27,6 +42,10 @@ struct CatMap {
 }
 
 impl CatMap {
+
+    pub fn n_w_cap( cap: usize ) -> Self {
+        CatMap { ranges: Vec::with_capacity(cap) }
+    }
 
     pub fn convert ( &self, num: u64 ) -> u64 {
         
@@ -47,18 +66,15 @@ fn get_seeds(str: &str) -> Vec<u64> {
     parse_sliced_numbers(seeds_slice.trim())
 }
 
-fn parse_sliced_numbers( str: &str ) -> Vec<u64> {
 
-    // performance: count whitesspaces and prealloc vec
+fn parse_sliced_numbers( str: &str ) -> Vec<u64> {
+    
     str 
         .split_whitespace()
         .filter_map(|nums| nums.parse::<u64>().ok())
-        .collect()
+        .collect::<Vec<u64>>()
+    
 }
-
-
-// expected maps 
-const NUMBER_OF_MAPS: u8 = 7;
 
 fn main () {
 
@@ -76,7 +92,8 @@ fn main () {
             .unwrap()
     );
 
-    println!("Seeds are: {:?}", seeds);
+    
+    println!("Calc seeds Took: {:?}", bench_start.elapsed());
 
     let mut maps_strings: Vec<Vec<&str>> = Vec::with_capacity(7);
     
@@ -88,38 +105,46 @@ fn main () {
                 return;
             }
 
-            if  f.as_bytes()[0].is_ascii_digit() {
+            //if  f.as_bytes()[0].is_ascii_digit() {
                 let l = maps_strings.len() - 1;
                 maps_strings[l].push( f );
-            }
+            //}
         });
 
     
+    println!("Populate str vec Took: {:?}", bench_start.elapsed());
+    
     let a: Vec<CatMap> = maps_strings.into_iter()
+        
         .map( | vecstr | {
-            let nums =  vecstr.into_iter().map(|str| parse_sliced_numbers(str)).map( |n| Range::new(n[1], n[0], n[2]) ).collect();
+            let mut cm = CatMap::n_w_cap( vecstr.len() - 1 );
             
-            CatMap { 
-                ranges: nums           
-            }
-
+            vecstr[1..].iter().for_each(|str| cm.ranges.push(Range::new(str)) );
+            
+            cm
         }).collect();
 
+    println!("create maps: {:?}", bench_start.elapsed());
+
     let min = seeds.into_iter().map(|mut seed| {
-        print!("Seed: {seed} -> ");
+        //print!("Seed: {seed} -> ");
         
         a.iter().for_each(|map| {
             seed = map.convert( seed );
-            print!("{seed} -> ");
+            //print!("{seed} -> ");
         });
 
-        println!();
+        //println!();
         
         seed
     }).min();
+
+    
+    println!("Jumps bet. maps: {:?}", bench_start.elapsed());
 
     let act_min = min.unwrap();
 
     println!("Min location is {act_min}");
     println!("Took: {:?}", bench_start.elapsed());
+
 }
